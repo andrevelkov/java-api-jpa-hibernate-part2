@@ -1,11 +1,10 @@
 package com.booleanuk.api.controller;
 
 import com.booleanuk.api.model.Author;
+import com.booleanuk.api.model.ModelDtos.*;
 import com.booleanuk.api.repository.AuthorRepository;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,8 +30,27 @@ public class AuthorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Author>> getAllAuthors() {
-        return ResponseEntity.ok(repo.findAll());
+    public ResponseEntity<List<AuthorDTO>> getAllAuthors() {
+        List<Author> authors = repo.findAll();
+
+        List<AuthorDTO> dtos = authors.stream().map(author -> {
+            List<BookDTO> bookDTOs = author.getBooks().stream()
+                    .map(book -> new BookDTO(
+                            book.getTitle(),
+                            book.getGenre()
+                    ))
+                    .toList();
+
+            return new AuthorDTO(
+                    author.getFirst_name(),
+                    author.getLast_name(),
+                    author.getEmail(),
+                    author.isAlive(),
+                    bookDTOs
+            );
+        }).toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")

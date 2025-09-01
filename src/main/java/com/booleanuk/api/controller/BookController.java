@@ -1,8 +1,14 @@
 package com.booleanuk.api.controller;
 
+import com.booleanuk.api.model.Author;
 import com.booleanuk.api.model.Book;
-import com.booleanuk.api.model.Book;
+import com.booleanuk.api.model.ModelDtos.BookDTO;
+import com.booleanuk.api.model.ModelDtos.AuthorDTO;
+import com.booleanuk.api.model.ModelDtos.PublisherDTO;
+import com.booleanuk.api.model.Publisher;
+import com.booleanuk.api.repository.AuthorRepository;
 import com.booleanuk.api.repository.BookRepository;
+import com.booleanuk.api.repository.PublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,22 +23,63 @@ public class BookController {
 
     @Autowired
     private BookRepository repo;
+    @Autowired
+    private AuthorRepository authorRepository;
+    @Autowired
+    private PublisherRepository publisherRepository;
 
     @PostMapping
-    public ResponseEntity<?> createBook(@RequestBody Book book) {
-        try {
-            Book savedBook = repo.save(book);
+    public ResponseEntity<?> createBook(@RequestBody BookDTO dto) {
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not create Book.");
+        Optional<Author> authorOpt = authorRepository.findById(dto.getAuthor_id());
+        Optional<Publisher> publisherOpt = publisherRepository.findById(dto.getPublisher_id());
+
+        if (authorOpt.isEmpty() || publisherOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Author or Publisher not found.");
         }
-        return ResponseEntity.ok().body("Book created");
+
+        Book book = new Book();
+        book.setTitle(dto.getTitle());
+        book.setGenre(dto.getGenre());
+        book.setAuthor(authorOpt.get());
+        book.setPublisher(publisherOpt.get());
+
+        repo.save(book);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Book created.");
     }
 
     @GetMapping
-    public ResponseEntity<List<Book>> getAllBooks() {
-        return ResponseEntity.ok(repo.findAll());
+    public ResponseEntity<List<BookDTO>> getAllBooks() {
+        List<Book> books = repo.findAll();
+
+        List<BookDTO> dtos = books.stream().map(book -> {
+            AuthorDTO authorDTO = new AuthorDTO(
+                    book.getAuthor().getFirst_name(),
+                    book.getAuthor().getLast_name(),
+                    book.getAuthor().getEmail(),
+                    book.getAuthor().isAlive()
+            );
+
+            PublisherDTO publisherDTO = new PublisherDTO(
+                    book.getPublisher().getName(),
+                    book.getPublisher().getLocation()
+            );
+
+            return new BookDTO(
+                    book.getTitle(),
+                    book.getGenre(),
+                    authorDTO,
+                    publisherDTO
+            );
+        }).toList();
+
+        return ResponseEntity.ok(dtos);
     }
+
+//    @GetMapping
+//    public ResponseEntity<List<Book>> getAllBooks() {
+//        return ResponseEntity.ok(repo.findAll());
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAnBook(@PathVariable int id) {

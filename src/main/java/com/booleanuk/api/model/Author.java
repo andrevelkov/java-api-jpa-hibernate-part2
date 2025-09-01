@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -23,6 +26,9 @@ public class Author {
     private String email;
     @Column(nullable = false)
     private boolean alive;
+
+    @OneToMany(mappedBy = "author")
+    private List<Book> books = new ArrayList<>();
 
     public Author(String first_name, String last_name, String email, boolean alive) {
         this.first_name = first_name;

@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -19,6 +22,9 @@ public class Publisher {
     private String name;
     @Column(nullable = false)
     private String location;
+
+    @OneToMany(mappedBy = "publisher")
+    private List<Book> books = new ArrayList<>();
 
     public Publisher(String name, String location) {
         setName(name);

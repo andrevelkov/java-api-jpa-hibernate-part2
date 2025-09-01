@@ -1,10 +1,7 @@
 package com.booleanuk.api.controller;
 
-import com.booleanuk.api.model.Author;
-import com.booleanuk.api.model.Book;
+import com.booleanuk.api.model.ModelDtos.*;
 import com.booleanuk.api.model.Publisher;
-import com.booleanuk.api.repository.AuthorRepository;
-import com.booleanuk.api.repository.BookRepository;
 import com.booleanuk.api.repository.PublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,9 +30,23 @@ public class PublisherController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Publisher>> getAllPublishers() {
-        return ResponseEntity.ok(repo.findAll());
+    public ResponseEntity<?> getAllPublishers() {
+        List<Publisher> publisherList = repo.findAll();
+
+        List<PublisherDTO> dtos = publisherList.stream().map(publisher -> {
+            List<BookDTO> bookDTOS = publisher.getBooks().stream().map(book ->
+                new BookDTO(book.getTitle(), book.getGenre())).toList();
+
+            return new PublisherDTO(publisher.getName(), publisher.getLocation(), bookDTOS);
+        }).toList();
+
+        return ResponseEntity.ok(dtos);
     }
+
+//    @GetMapping
+//    public ResponseEntity<List<Publisher>> getAllPublishers() {
+//        return ResponseEntity.ok(repo.findAll());
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAnPublisher(@PathVariable int id) {
